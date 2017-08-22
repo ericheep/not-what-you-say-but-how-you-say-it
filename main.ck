@@ -23,18 +23,7 @@ fun void record(int idx) {
     mic[idx].record(0);
 }
 
-fun void beeps() {
-    sin.gain(0.5);
-    0.05::second => now;
-    sin.gain(0.0);
-    0.05::second => now;
-    sin.gain(0.5);
-    0.05::second => now;
-    sin.gain(0.0);
-}
-
 for (0 => int i; i < NUM_TAKES; i++) {
-    beeps();
     LOOP_DURATION/(takeNumber + 1) => dur division;
 
     gn.gain(1.0);
@@ -50,4 +39,8 @@ for (0 => int i; i < NUM_TAKES; i++) {
     }
 
     takeNumber++;
+}
+
+fun void clip(int numDivisions, int position, float width) {
+    LOOP_DURATION/(takeNumber + 1) => dur divisionDur;
 }
