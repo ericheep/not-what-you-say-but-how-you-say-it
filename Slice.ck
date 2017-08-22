@@ -1,5 +1,8 @@
 // Slice.ck
 
+// August 22nd, 2017
+// Eric Heep
+
 public class Slice extends Chubgraph {
 
     OscOut out;
@@ -17,6 +20,7 @@ public class Slice extends Chubgraph {
     adc => LiSa mic => ADSR env => dac;
     adc => Gain gn => env;
 
+    // eventually will change to a WinFuncEnv, with no sustain
     env.sustainLevel(1.0);
 
     .5::ms => dur OSC_SPEED;
@@ -33,7 +37,6 @@ public class Slice extends Chubgraph {
 
         adjustedSliceDuration * 0.5 => dur halfSliceDuration;
         halfSliceDuration * m_envelopePercentage => dur envelopeDuration;
-        <<< envelopeDuration >>>;
 
         // set envelope times
         env.attackTime(envelopeDuration);
@@ -42,13 +45,17 @@ public class Slice extends Chubgraph {
         playSlice(centerPosition, halfSliceDuration, envelopeDuration, tapePlayback);
     }
 
+    // playing portion of the slice separated just to limit confusion
     fun void playSlice(dur centerPosition, dur halfSliceDuration, dur envelopeDuration, int tapePlayback) {
         now => time loopStart;
 
-        // wait until our first envelope
+        // in case width is more than 1.0
+
         if (centerPosition >= halfSliceDuration) {
             centerPosition - halfSliceDuration => now;
         }
+
+        // recording or live
 
         if (tapePlayback) {
             mic.play(1);
@@ -58,19 +65,33 @@ public class Slice extends Chubgraph {
 
         spork ~ sendEnvelopeOSC(loopStart, halfSliceDuration * 2.0);
 
+        // envelope attack
+
         env.keyOn();
         halfSliceDuration => now;
-        halfSliceDuration - envelopeDuration => now;
+
+        now - loopStart => dur midPoint;
+
+        // in case width is more than 1.0
+
+        if (midPoint + halfSliceDuration > m_loopDuration) {
+            m_loopDuration - midPoint - envelopeDuration => now;
+        } else {
+            halfSliceDuration - envelopeDuration => now;
+        }
+
+        // envelope release
+
         env.keyOff();
         envelopeDuration => now;
+
+        // recording or live
 
         if (tapePlayback) {
             mic.play(0);
         } else {
             gn.gain(0.0);
         }
-
-        mic.play(0);
     }
 
     fun void record(int r) {
@@ -97,13 +118,16 @@ public class Slice extends Chubgraph {
     fun void sendEnvelopeOSC(time loopStart, dur sendDuration) {
         (sendDuration/OSC_SPEED) $ int + 1 => int numSends;
         for (0 => int i; i < numSends; i++) {
-            out.start("/v");
-            out.add((now - loopStart)/m_loopDurationmic.playPos());
-            out.add(env.value());
-            out.send();
+            (now - loopStart)/m_loopDuration => float position;
+
+            if (position <= 1.0) {
+                out.start("/v");
+                out.add(position);
+                out.add(env.value());
+                out.send();
+            }
 
             OSC_SPEED => now;
         }
     }
-
 }

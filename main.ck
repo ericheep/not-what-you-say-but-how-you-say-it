@@ -1,42 +1,63 @@
+// main.ck
+// not-what-you-say-but-how-you-say-it
+
+// August 22nd, 2017
+// Eric Heep
+
+// init
 
 2 => int NUM_TAKES;
-0 => int takeNumber;
+NUM_TAKES=> int NUM_SLICES;
 
-0.2::second => dur LOOP_DURATION;
+1.0::second => dur LOOP_DURATION;
 
-Slice mic[NUM_TAKES];
-adc => Gain gn => blackhole;
+Slice slc[NUM_SLICES];
 
-for (0 => int i; i < NUM_TAKES; i++) {
-    adc => mic[i] => dac;
-    mic[i].duration(LOOP_DURATION);
-    mic[i].loopDuration(LOOP_DURATION);
-    mic[i].envelopePercentage(0.1);
+// sound chain
+
+for (0 => int i; i < NUM_SLICES; i++) {
+    adc => slc[i] => dac;
+
+    // set memory
+    slc[i].duration(LOOP_DURATION);
+
+    // set loop duration, should be less than memory
+    slc[i].loopDuration(LOOP_DURATION);
+
+    slc[i].envelopePercentage(0.25);
+    slc[i].sliceWidth(1.0);
 }
+
+// guts
 
 fun void record(int idx) {
-    mic[idx].record(1);
+    slc[idx].record(1);
     LOOP_DURATION => now;
-    mic[idx].record(0);
+    slc[idx].record(0);
 }
 
-for (0 => int i; i < NUM_TAKES; i++) {
-    spork ~ record(takeNumber);
+fun void main() {
+    0 => int takeNumber;
 
-    for (0 => int j; j < takeNumber; j++) {
-        mic[j].sliceWidth(2.0);
-        mic[j].envelopePercentage(0.25);
+    for (0 => int i; i < NUM_TAKES; i++) {
+        spork ~ record(takeNumber);
 
-        if (i == 0) {
-            spork ~ mic[j].slice(i, takeNumber + 1, 0);
-        } else {
-            spork ~ mic[j].slice(i, takeNumber + 1, 1);
+        for (0 => int j; j < takeNumber; j++) {
+            if (i == 0) {
+                spork ~ slc[j].slice(i, takeNumber + 1, 0);
+            } else {
+                spork ~ slc[j].slice(i, takeNumber + 1, 1);
+            }
         }
+
+        LOOP_DURATION => now;
+
+        takeNumber++;
     }
-
-    LOOP_DURATION => now;
-
-    takeNumber++;
 }
 
-1::second => now;
+// run
+
+<<< "okay", "" >>>;
+
+main();
