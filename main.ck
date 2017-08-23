@@ -6,7 +6,7 @@
 
 // init
 
-2 => int NUM_TAKES;
+16 => int NUM_TAKES;
 NUM_TAKES=> int NUM_SLICES;
 
 1.0::second => dur LOOP_DURATION;
@@ -37,22 +37,24 @@ fun void record(int idx) {
 }
 
 fun void main() {
-    0 => int takeNumber;
+    while (true) {
+        0 => int takeNumber;
 
-    for (0 => int i; i < NUM_TAKES; i++) {
-        spork ~ record(takeNumber);
+        for (0 => int i; i < NUM_TAKES; i++) {
+            spork ~ record(takeNumber);
 
-        for (0 => int j; j < takeNumber; j++) {
-            if (i == 0) {
-                spork ~ slc[j].slice(i, takeNumber + 1, 0);
-            } else {
-                spork ~ slc[j].slice(i, takeNumber + 1, 1);
+            for (0 => int j; j < takeNumber + 1; j++) {
+                if (j == 0) {
+                    spork ~ slc[j].slice(j, takeNumber + 1, 1);
+                } else {
+                    spork ~ slc[j].slice(j, takeNumber + 1, 0);
+                }
             }
+
+            LOOP_DURATION => now;
+
+            takeNumber++;
         }
-
-        LOOP_DURATION => now;
-
-        takeNumber++;
     }
 }
 

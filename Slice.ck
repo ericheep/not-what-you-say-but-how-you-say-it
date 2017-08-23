@@ -17,13 +17,13 @@ public class Slice extends Chubgraph {
     1.0 => float m_sliceWidth;
     1.0 => float m_envelopePercentage;
 
-    adc => LiSa mic => ADSR env => dac;
+    adc => LiSa mic => WinFuncEnv env => dac;
     adc => Gain gn => env;
 
     // eventually will change to a WinFuncEnv, with no sustain
-    env.sustainLevel(1.0);
+    // env.sustainLevel(1.0);
 
-    .5::ms => dur OSC_SPEED;
+    20::samp => dur OSC_SPEED;
 
     // to be sporked at the start of a loop
     fun void slice(int whichSlice, int numSlices, int tapePlayback) {
@@ -123,7 +123,7 @@ public class Slice extends Chubgraph {
             if (position <= 1.0) {
                 out.start("/v");
                 out.add(position);
-                out.add(env.value());
+                out.add(env.windowValue());
                 out.send();
             }
 
