@@ -47,9 +47,10 @@ public class Slice extends Chubgraph {
         now => time loopStart;
 
         // in case width is more than 1.0
+        centerPosition - halfSliceDuration => dur wait;
 
-        if (centerPosition >= halfSliceDuration) {
-            centerPosition - halfSliceDuration => now;
+        if (wait > 0::samp) {
+            wait => now;
         }
 
         // recording or live
@@ -66,7 +67,14 @@ public class Slice extends Chubgraph {
         // envelope attack
 
         env.keyOn();
-        halfSliceDuration => now;
+
+        // might be a cleaner way to do this later on
+
+        if (wait > 0::samp) {
+            halfSliceDuration => now;
+        } else {
+            halfSliceDuration + wait => now;
+        }
 
         now - loopStart => dur midPoint;
 
