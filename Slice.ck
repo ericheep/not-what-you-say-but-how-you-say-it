@@ -20,9 +20,6 @@ public class Slice extends Chubgraph {
     adc => LiSa mic => WinFuncEnv env => dac;
     adc => Gain gn => env;
 
-    // eventually will change to a WinFuncEnv, with no sustain
-    // env.sustainLevel(1.0);
-
     20::samp => dur OSC_SPEED;
 
     // to be sporked at the start of a loop
@@ -59,11 +56,12 @@ public class Slice extends Chubgraph {
 
         if (tapePlayback) {
             mic.play(1);
+            mic.playPos(centerPosition - halfSliceDuration);
         } else {
             gn.gain(1.0);
         }
 
-        spork ~ sendEnvelopeOSC(loopStart, halfSliceDuration * 2.0);
+        spork ~ sendEnvelopeOSC(loopStart, halfSliceDuration * 2.0, tapePlayback);
 
         // envelope attack
 
@@ -95,7 +93,10 @@ public class Slice extends Chubgraph {
     }
 
     fun void record(int r) {
-        mic.clear();
+        if (r == 1) {
+            mic.clear();
+            mic.recPos(0::samp);
+        }
         mic.record(r);
     }
 
@@ -115,7 +116,7 @@ public class Slice extends Chubgraph {
         ep => m_envelopePercentage;
     }
 
-    fun void sendEnvelopeOSC(time loopStart, dur sendDuration) {
+    fun void sendEnvelopeOSC(time loopStart, dur sendDuration, int tapePlayback) {
         (sendDuration/OSC_SPEED) $ int + 1 => int numSends;
         for (0 => int i; i < numSends; i++) {
             (now - loopStart)/m_loopDuration => float position;
@@ -123,7 +124,11 @@ public class Slice extends Chubgraph {
             if (position <= 1.0) {
                 out.start("/v");
                 out.add(position);
-                out.add(env.windowValue());
+                if (tapePlayback) {
+                    out.add(env.windowValue() + mic.last());
+                } else {
+                    out.add(env.windowValue() + gn.last());
+                }
                 out.send();
             }
 
