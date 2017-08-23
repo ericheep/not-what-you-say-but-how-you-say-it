@@ -29,6 +29,7 @@ for (0 => int i; i < NUM_SLICES; i++) {
     adc => slc[i] => dac;
 
     // set memory
+    slc[i].id(i);
     slc[i].duration(MAX_DURATION);
 
     slc[i].envelopePercentage(0.10);

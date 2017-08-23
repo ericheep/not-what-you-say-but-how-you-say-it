@@ -13,6 +13,7 @@ public class Slice extends Chubgraph {
     // durs
     dur m_loopDuration;
     dur m_dividedSliceDuration;
+    int m_id;
 
     1.0 => float m_sliceWidth;
     1.0 => float m_envelopePercentage;
@@ -21,6 +22,10 @@ public class Slice extends Chubgraph {
     adc => Gain gn => env;
 
     20::samp => dur OSC_SPEED;
+
+    fun void id(int i) {
+        i => m_id;
+    }
 
     // to be sporked at the start of a loop
     fun void slice(int whichSlice, int numSlices, int tapePlayback) {
@@ -137,6 +142,7 @@ public class Slice extends Chubgraph {
                 } else {
                     out.add(env.windowValue() + gn.last());
                 }
+                out.add(m_id);
                 out.send();
             }
 
