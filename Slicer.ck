@@ -5,7 +5,7 @@
 
 public class Slicer extends Chubgraph {
 
-    audioOSCID audioOSC;
+    AudioOSCID audioOSC;
 
     // durs
     dur m_loopDuration;
