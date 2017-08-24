@@ -5,7 +5,7 @@
 // Eric Heep
 
 // init
-SliceOSCID slcOSC;
+AudioOSCID audioOSC;
 
 64 => int NUM_TAKES;
 NUM_TAKES=> int NUM_SLICES;
@@ -100,7 +100,7 @@ fun void main() {
 
             if (msg.ascii == 32) {
                 if (msg.isButtonDown()) {
-                    slcOSC.instance.clearOSC();
+                    audioOSC.instance.clear();
                     sliceLoop(takeNumber);
                     takeNumber++;
                     if (takeNumber >= NUM_TAKES) {

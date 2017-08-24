@@ -1,4 +1,4 @@
-public class SliceOSC {
+public class AudioOSC {
 
     OscOut out;
     OscMsg msg;
@@ -7,12 +7,12 @@ public class SliceOSC {
 
     30::samp => dur OSC_SPEED;
 
-    fun void clearOSC() {
+    fun void clear() {
         out.start("/c");
         out.send();
     }
 
-    fun void sendOSC(LiSa mic, Gain gn, WinFuncEnv env, dur loopDuration, time loopStart, dur sendDuration, int tapePlayback, int id) {
+    fun void send(LiSa mic, Gain gn, WinFuncEnv env, dur loopDuration, time loopStart, dur sendDuration, int tapePlayback, int id) {
         (sendDuration/OSC_SPEED) $ int + 1 => int numSends;
         for (0 => int i; i < numSends; i++) {
             (now - loopStart)/loopDuration => float position;

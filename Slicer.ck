@@ -1,11 +1,11 @@
-// Slice.ck
+// Slicer.ck
 
 // August 22nd, 2017
 // Eric Heep
 
-public class Slice extends Chubgraph {
+public class Slicer extends Chubgraph {
 
-    SliceOSCID slcOSC;
+    audioOSCID audioOSC;
 
     // durs
     dur m_loopDuration;
@@ -62,7 +62,7 @@ public class Slice extends Chubgraph {
             gn.gain(1.0);
         }
 
-        spork ~ slcOSC.instance.sendOSC(mic, gn, env, m_loopDuration, loopStart, halfSliceDuration * 2.0, tapePlayback, m_id);
+        spork ~ audioOSC.instance.send(mic, gn, env, m_loopDuration, loopStart, halfSliceDuration * 2.0, tapePlayback, m_id);
 
         // envelope attack
 
