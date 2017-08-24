@@ -5,8 +5,9 @@
 // Eric Heep
 
 // init
+SliceOSCID slcOSC;
 
-32 => int NUM_TAKES;
+64 => int NUM_TAKES;
 NUM_TAKES=> int NUM_SLICES;
 
 // global, ugh
@@ -32,8 +33,8 @@ for (0 => int i; i < NUM_SLICES; i++) {
     slc[i].id(i);
     slc[i].duration(MAX_DURATION);
 
-    slc[i].envelopePercentage(0.10);
-    slc[i].sliceWidth(1.1);
+    slc[i].envelopePercentage(0.1);
+    slc[i].sliceWidth(1.0);
 }
 
 // guts
@@ -99,9 +100,10 @@ fun void main() {
 
             if (msg.ascii == 32) {
                 if (msg.isButtonDown()) {
+                    slcOSC.instance.clearOSC();
                     sliceLoop(takeNumber);
                     takeNumber++;
-                    if (takeNumber > NUM_TAKES) {
+                    if (takeNumber >= NUM_TAKES) {
                         1 => takeNumber;
                     }
                 }

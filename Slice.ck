@@ -5,10 +5,7 @@
 
 public class Slice extends Chubgraph {
 
-    OscOut out;
-    OscMsg msg;
-
-    out.dest("127.0.0.1", 12345);
+    SliceOSCID slcOSC;
 
     // durs
     dur m_loopDuration;
@@ -20,8 +17,6 @@ public class Slice extends Chubgraph {
 
     adc => LiSa mic => WinFuncEnv env => dac;
     adc => Gain gn => env;
-
-    20::samp => dur OSC_SPEED;
 
     fun void id(int i) {
         i => m_id;
@@ -67,7 +62,7 @@ public class Slice extends Chubgraph {
             gn.gain(1.0);
         }
 
-        spork ~ sendEnvelopeOSC(loopStart, halfSliceDuration * 2.0, tapePlayback);
+        spork ~ slcOSC.instance.sendOSC(mic, gn, env, m_loopDuration, loopStart, halfSliceDuration * 2.0, tapePlayback, m_id);
 
         // envelope attack
 
@@ -127,26 +122,5 @@ public class Slice extends Chubgraph {
 
     fun void envelopePercentage(float ep) {
         ep => m_envelopePercentage;
-    }
-
-    fun void sendEnvelopeOSC(time loopStart, dur sendDuration, int tapePlayback) {
-        (sendDuration/OSC_SPEED) $ int + 1 => int numSends;
-        for (0 => int i; i < numSends; i++) {
-            (now - loopStart)/m_loopDuration => float position;
-
-            if (position <= 1.0) {
-                out.start("/v");
-                out.add(position);
-                if (tapePlayback) {
-                    out.add(env.windowValue() + mic.last());
-                } else {
-                    out.add(env.windowValue() + gn.last());
-                }
-                out.add(m_id);
-                out.send();
-            }
-
-            OSC_SPEED => now;
-        }
     }
 }
