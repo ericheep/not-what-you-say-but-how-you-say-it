@@ -16,7 +16,7 @@ NUM_TAKES=> int NUM_SLICES;
 5.0::second => dur MAX_DURATION;
 0.0::second => dur loopDuration;
 
-Slice slc[NUM_SLICES];
+Slicer slcr[NUM_SLICES];
 
 // keyboard control
 
@@ -27,37 +27,37 @@ if (!hi.openKeyboard(0)) me.exit();
 // sound chain
 
 for (0 => int i; i < NUM_SLICES; i++) {
-    adc => slc[i] => dac;
+    adc => slcr[i] => dac;
 
     // set memory
-    slc[i].id(i);
-    slc[i].duration(MAX_DURATION);
+    slcr[i].id(i);
+    slcr[i].duration(MAX_DURATION);
 
-    slc[i].envelopePercentage(0.1);
-    slc[i].sliceWidth(1.0);
+    slcr[i].envelopePercentage(0.1);
+    slcr[i].sliceWidth(1.0);
 }
 
 // guts
 
 fun void record(int idx) {
-    slc[idx].record(1);
+    slcr[idx].record(1);
     loopDuration => now;
-    slc[idx].record(0);
+    slcr[idx].record(0);
 }
 
 fun void recordFirstTake() {
     now => time recordStart;
 
-    slc[0].record(1);
+    slcr[0].record(1);
     while (recordFlag) {
         1::samp => now;
     }
 
-    slc[0].record(0);
+    slcr[0].record(0);
     now - recordStart => loopDuration;
 
     for (0 => int i; i < NUM_SLICES; i++) {
-        slc[i].loopDuration(loopDuration);
+        slcr[i].loopDuration(loopDuration);
     }
 }
 
@@ -66,9 +66,9 @@ fun void sliceLoop(int takeNumber) {
 
     for (0 => int j; j < takeNumber + 1; j++) {
         if (j == 0) {
-            spork ~ slc[takeNumber - j].slice(j, takeNumber + 1, 0);
+            spork ~ slcr[takeNumber - j].slice(j, takeNumber + 1, 0);
         } else {
-            spork ~ slc[takeNumber - j].slice(j, takeNumber + 1, 1);
+            spork ~ slcr[takeNumber - j].slice(j, takeNumber + 1, 1);
         }
     }
 
