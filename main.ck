@@ -7,7 +7,7 @@
 // init
 AudioOSCID audioOSC;
 
-64 => int NUM_TAKES;
+32 => int NUM_TAKES;
 NUM_TAKES=> int NUM_SLICES;
 
 // global, ugh

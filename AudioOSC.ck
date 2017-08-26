@@ -5,10 +5,17 @@ public class AudioOSC {
 
     out.dest("127.0.0.1", 12345);
 
-    30::samp => dur OSC_SPEED;
+    44.1::samp => dur OSC_SPEED;
 
     fun void clear() {
         out.start("/c");
+        out.send();
+    }
+
+    fun void number(int idx, float pos) {
+        out.start("/n");
+        out.add(idx);
+        out.add(pos);
         out.send();
     }
 
