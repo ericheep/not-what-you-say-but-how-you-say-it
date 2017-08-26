@@ -72,7 +72,7 @@ fun void sliceLoop(int takeNumber) {
         }
     }
 
-    loopDuration => now;
+    loopDuration + 100::ms => now;
 }
 
 fun void main() {

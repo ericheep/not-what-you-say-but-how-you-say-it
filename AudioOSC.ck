@@ -5,7 +5,7 @@ public class AudioOSC {
 
     out.dest("127.0.0.1", 12345);
 
-    44.1::samp => dur OSC_SPEED;
+    22.05::samp => dur OSC_SPEED;
 
     fun void clear() {
         out.start("/c");
@@ -19,22 +19,20 @@ public class AudioOSC {
         out.send();
     }
 
-    fun void send(LiSa mic, Gain gn, WinFuncEnv env, dur loopDuration, time loopStart, dur sendDuration, int tapePlayback, int id) {
-        (sendDuration/OSC_SPEED) $ int + 1 => int numSends;
-        for (0 => int i; i < numSends; i++) {
-            (now - loopStart)/loopDuration => float position;
+    fun void sendEnvPlusGain(Gain gn, WinFuncEnv env, dur loopDuration, time loopStart, int id) {
+        0.0 => float position;
+        1 => int stopFlag;;
 
-            if (position <= 1.01) {
-                out.start("/v");
-                out.add(position);
-                if (tapePlayback) {
-                    out.add(env.windowValue() + mic.last());
-                } else {
-                    out.add(env.windowValue() + gn.last());
-                }
-                out.add(id);
-                out.send();
-            }
+        while (position <= 1.0) {
+            (now - loopStart)/loopDuration => position;
+            env.windowValue() + gn.last() => float val;
+
+            out.start("/v");
+            out.add(position);
+            out.add(val);
+            out.add(id);
+            out.send();
+
             OSC_SPEED => now;
         }
     }

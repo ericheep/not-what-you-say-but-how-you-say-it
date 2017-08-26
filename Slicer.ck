@@ -15,104 +15,93 @@ public class Slicer extends Chubgraph {
     1.0 => float m_sliceWidth;
     1.0 => float m_envelopePercentage;
 
-    adc => LiSa mic => WinFuncEnv env => dac;
-    adc => Gain gn => env;
+    adc => LiSa tape => Gain tapeGn => WinFuncEnv env => dac;
+    adc => Gain micGn => env;
 
     fun void id(int i) {
         i => m_id;
     }
 
+    fun float getCenterPosition(int whichSlice, int numSlices) {
+        return (whichSlice + 0.5)/numSlices;
+    }
+
+    fun dur getCenterDuration(float centerPoint, dur loopDuration) {
+        return centerPoint * loopDuration;
+    }
+
+    fun dur getHalfSliceDuration(float sliceWidth, int numSlices, dur loopDuration) {
+        return (loopDuration/numSlices * sliceWidth) * 0.5;
+    }
+
+    fun dur getEnvelopeDuration(dur halfSliceDuration, float envelopePercentage) {
+        return halfSliceDuration * envelopePercentage;
+    }
+
     // to be sporked at the start of a loop
     fun void slice(int whichSlice, int numSlices, int tapePlayback) {
-        // find the middle point of the slice
-        ((whichSlice + 0.5)/numSlices) => float centerPosition;
-        centerPosition * m_loopDuration => dur centerDuration;
-
-        // finds the non adjusted slice duration
-        m_loopDuration/numSlices => dur dividedSliceDuration;
-
-        // trim or extend the duration according to the slice width
-        dividedSliceDuration * m_sliceWidth => dur adjustedSliceDuration;
-
-        adjustedSliceDuration * 0.5 => dur halfSliceDuration;
-        halfSliceDuration * m_envelopePercentage => dur envelopeDuration;
+        getCenterPosition(whichSlice, numSlices) => float centerPosition;
+        getCenterDuration(centerPosition, m_loopDuration) => dur centerDuration;
+        getHalfSliceDuration(m_sliceWidth, numSlices, m_loopDuration) => dur halfSliceDuration;
+        getEnvelopeDuration(halfSliceDuration, m_envelopePercentage) => dur envelopeDuration;
 
         // set envelope times
         env.attackTime(envelopeDuration);
         env.releaseTime(envelopeDuration);
 
+        // let oFx know which slice this is
         audioOSC.instance.number(m_id, centerPosition);
-        playSlice(centerDuration, halfSliceDuration, envelopeDuration, tapePlayback);
+
+        if (tapePlayback) {
+            playSlice(tapeGn, centerDuration, halfSliceDuration, envelopeDuration);
+        } else {
+            playSlice(micGn, centerDuration, halfSliceDuration, envelopeDuration);
+        }
     }
 
     // playing portion of the slice separated just to limit confusion
-    fun void playSlice(dur centerDuration, dur halfSliceDuration, dur envelopeDuration, int tapePlayback) {
+    fun void playSlice(Gain gn, dur centerDuration, dur halfSliceDuration, dur envelopeDuration) {
         now => time loopStart;
+        centerDuration - halfSliceDuration => dur silenceDuration;
 
-        // in case width is more than 1.0
-        centerDuration - halfSliceDuration => dur wait;
-
-        if (wait > 0::samp) {
-            wait => now;
+        if (silenceDuration > 0::samp) {
+            silenceDuration => now;
         }
 
-        // recording or live
-
-        if (tapePlayback) {
-            mic.play(1);
-            mic.playPos(centerDuration - halfSliceDuration);
-        } else {
-            gn.gain(1.0);
-        }
-
-        spork ~ audioOSC.instance.send(mic, gn, env, m_loopDuration, loopStart, halfSliceDuration * 2.0, tapePlayback, m_id);
-
-        // envelope attack
-
+        gn.gain(1.0);
         env.keyOn();
 
-        // might be a cleaner way to do this later on
+        // sending audio data to oFx vis
+        spork ~ audioOSC.instance.sendEnvPlusGain(gn, env, m_loopDuration, loopStart, m_id);
 
-        if (wait > 0::samp) {
+        if (silenceDuration > 0::samp) {
             halfSliceDuration => now;
         } else {
-            halfSliceDuration + wait => now;
+            halfSliceDuration + silenceDuration => now;
         }
 
         now - loopStart => dur midPoint;
-
-        // in case width is more than 1.0
-
         if (midPoint + halfSliceDuration > m_loopDuration) {
             m_loopDuration - midPoint - envelopeDuration => now;
         } else {
             halfSliceDuration - envelopeDuration => now;
         }
 
-        // envelope release
-
         env.keyOff();
         envelopeDuration => now;
-
-        // recording or live
-
-        if (tapePlayback) {
-            mic.play(0);
-        } else {
-            gn.gain(0.0);
-        }
+        gn.gain(0.0);
     }
 
     fun void record(int r) {
         if (r == 1) {
-            mic.clear();
-            mic.recPos(0::samp);
+            tape.clear();
+            tape.recPos(0::samp);
         }
-        mic.record(r);
+        tape.record(r);
     }
 
     fun void duration(dur d) {
-        mic.duration(d);
+        tape.duration(d);
     }
 
     fun void loopDuration(dur ld) {
