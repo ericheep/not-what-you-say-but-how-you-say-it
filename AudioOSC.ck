@@ -19,9 +19,26 @@ public class AudioOSC {
         out.send();
     }
 
+     fun void sendGain(Gain gn, dur loopDuration, int id) {
+        0.0 => float position;
+        now => time loopStart;
+
+        while (position <= 1.0) {
+            (now - loopStart)/loopDuration => position;
+            gn.last() => float val;
+
+            out.start("/g");
+            out.add(position);
+            out.add(val);
+            out.add(id);
+            out.send();
+
+            OSC_SPEED => now;
+        }
+    }
+
     fun void sendEnvPlusGain(Gain gn, WinFuncEnv env, dur loopDuration, time loopStart, int id) {
         0.0 => float position;
-        1 => int stopFlag;;
 
         while (position <= 1.0) {
             (now - loopStart)/loopDuration => position;

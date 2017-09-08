@@ -38,6 +38,15 @@ public class Slicer extends Chubgraph {
         return halfSliceDuration * envelopePercentage;
     }
 
+    fun void playLoop(int mainTake) {
+        spork ~ audioOSC.instance.sendGain(tapeGn, m_loopDuration, m_id);
+
+        tape.playPos(0::samp);
+        tape.play(1);
+        m_loopDuration => now;
+        tape.play(0);
+    }
+
     // to be sporked at the start of a loop
     fun void slice(int whichSlice, int numSlices, int tapePlayback) {
         getCenterPosition(whichSlice, numSlices) => float centerPosition;
@@ -92,10 +101,46 @@ public class Slicer extends Chubgraph {
         gn.gain(0.0);
     }
 
+    fun void loop(int record) {
+        <<< m_loopDuration >>>;
+        /*
+        now => time loopStart;
+
+        spork ~ audioOSC.instance.sendGain(tapeGn, m_loopDuration, m_id);
+
+        10::ms => dur envelopeDuration;
+        env.attackTime(envelopeDuration);
+        env.releaseTime(envelopeDuration);
+
+        if (record) {
+            tape.record(1);
+            micGn.gain(1.0);
+        } else {
+            tape.playPos(0.0::samp);
+            tape.play(1);
+        }
+
+        env.keyOn();
+
+        m_loopDuration - envelopeDuration => now;
+        env.keyOff();
+
+        envelopeDuration => now;
+        if (record) {
+            tape.record(0);
+            micGn.gain(0.0);
+        } else {
+            tape.play(0);
+        }
+        */
+    }
+
     fun void record(int r) {
-        if (r == 1) {
+        if (r) {
             tape.clear();
             tape.recPos(0::samp);
+        } else {
+            tape.recPos() => m_loopDuration;
         }
         tape.record(r);
     }

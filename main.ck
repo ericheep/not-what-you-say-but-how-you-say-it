@@ -1,5 +1,6 @@
 // main.ck
 // not-what-you-say-but-how-you-say-it
+// ..is that too literal?
 
 // August 22nd, 2017
 // Eric Heep
@@ -7,8 +8,8 @@
 // init
 AudioOSCID audioOSC;
 
-32 => int NUM_TAKES;
-NUM_TAKES=> int NUM_SLICES;
+32 => int TOTAL_TAKES;
+TOTAL_TAKES=> int NUM_SLICES;
 
 // global, ugh
 0 => int recordFlag;
@@ -39,44 +40,36 @@ for (0 => int i; i < NUM_SLICES; i++) {
 
 // guts
 
-fun void record(int idx) {
-    slcr[idx].record(1);
-    loopDuration => now;
-    slcr[idx].record(0);
-}
+/*
+fun void sliceLoop(int whichTake) {
+    spork ~ record(whichTake);
 
-fun void recordFirstTake() {
-    now => time recordStart;
-
-    slcr[0].record(1);
-    while (recordFlag) {
-        1::samp => now;
-    }
-
-    slcr[0].record(0);
-    now - recordStart => loopDuration;
-
-    for (0 => int i; i < NUM_SLICES; i++) {
-        slcr[i].loopDuration(loopDuration);
-    }
-}
-
-fun void sliceLoop(int takeNumber) {
-    spork ~ record(takeNumber);
-
-    for (0 => int j; j < takeNumber + 1; j++) {
-        if (j == 0) {
-            spork ~ slcr[takeNumber - j].slice(j, takeNumber + 1, 0);
+    for (0 => int i; i < whichTake + 1; i++) {
+        if (i == 0) {
+            spork ~ slcr[whichTake - i].slice(i, whichTake + 1, 0);
         } else {
-            spork ~ slcr[takeNumber - j].slice(j, takeNumber + 1, 1);
+            spork ~ slcr[whichTake - i].slice(i, whichTake + 1, 1);
         }
     }
+}
+*/
 
-    loopDuration + 100::ms => now;
+fun void sectionOne(int whichTake) {
+    // spork ~ record(whichTake);
+
+    for (0 => int i; i < whichTake; i++) {
+
+        // always record the newest take loop
+        if (i == whichTake - 1) {
+            spork ~ slcr[whichTake - i].loop(1);
+        } else {
+            spork ~ slcr[whichTake - i].loop(0);
+        }
+    }
 }
 
 fun void main() {
-    1 => int takeNumber;
+    1 => int whichTake;
 
     while (true) {
         hi => now;
@@ -84,27 +77,29 @@ fun void main() {
         while (hi.recv(msg)) {
 
             // ~
-
             if (msg.ascii == 96) {
                 if (msg.isButtonDown()) {
+                    slcr[0].record(1);
                     1 => recordFlag;
-                    spork ~ recordFirstTake();
                 }
                 if (msg.isButtonUp()) {
+                    slcr[0].record(0);
                     0 => recordFlag;
-                    1 => takeNumber;
+
+                    1 => whichTake;
                 }
             }
 
-            // space bar
-
+            // spacebar
             if (msg.ascii == 32) {
                 if (msg.isButtonDown()) {
                     audioOSC.instance.clear();
-                    sliceLoop(takeNumber);
-                    takeNumber++;
-                    if (takeNumber >= NUM_TAKES) {
-                        1 => takeNumber;
+                    sectionOne(whichTake);
+                    // sliceLoop(whichTake);
+
+                    whichTake++;
+                    if (whichTake >= TOTAL_TAKES) {
+                        1 => whichTake;
                     }
                 }
             }
