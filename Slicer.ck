@@ -7,7 +7,7 @@ public class Slicer extends Chubgraph {
 
     AudioOSCID audioOSC;
 
-    // durs
+    10::ms => dur m_loopEnvelopeDuration;
     dur m_loopDuration;
     dur m_dividedSliceDuration;
     int m_id;
@@ -17,10 +17,6 @@ public class Slicer extends Chubgraph {
 
     adc => LiSa tape => Gain tapeGn => WinFuncEnv env => dac;
     adc => Gain micGn => env;
-
-    fun void id(int i) {
-        i => m_id;
-    }
 
     fun float getCenterPosition(int whichSlice, int numSlices) {
         return (whichSlice + 0.5)/numSlices;
@@ -38,15 +34,7 @@ public class Slicer extends Chubgraph {
         return halfSliceDuration * envelopePercentage;
     }
 
-    fun void playLoop(int mainTake) {
-        spork ~ audioOSC.instance.sendGain(tapeGn, m_loopDuration, m_id);
-
-        tape.playPos(0::samp);
-        tape.play(1);
-        m_loopDuration => now;
-        tape.play(0);
-    }
-
+    /*
     // to be sporked at the start of a loop
     fun void slice(int whichSlice, int numSlices, int tapePlayback) {
         getCenterPosition(whichSlice, numSlices) => float centerPosition;
@@ -100,17 +88,11 @@ public class Slicer extends Chubgraph {
         envelopeDuration => now;
         gn.gain(0.0);
     }
+    */
 
-    fun void loop(int record) {
-        <<< m_loopDuration >>>;
-        /*
-        now => time loopStart;
-
-        spork ~ audioOSC.instance.sendGain(tapeGn, m_loopDuration, m_id);
-
-        10::ms => dur envelopeDuration;
-        env.attackTime(envelopeDuration);
-        env.releaseTime(envelopeDuration);
+    // straight forward looper
+    fun void loop(int record, float verticalPosition) {
+        spork ~ audioOSC.instance.sendGain(tapeGn, m_id, verticalPosition, m_loopDuration);
 
         if (record) {
             tape.record(1);
@@ -120,21 +102,24 @@ public class Slicer extends Chubgraph {
             tape.play(1);
         }
 
+        env.attackTime(m_loopEnvelopeDuration);
+        env.releaseTime(m_loopEnvelopeDuration);
         env.keyOn();
 
-        m_loopDuration - envelopeDuration => now;
+        m_loopDuration - m_loopEnvelopeDuration => now;
         env.keyOff();
 
-        envelopeDuration => now;
+        m_loopEnvelopeDuration => now;
+
         if (record) {
             tape.record(0);
             micGn.gain(0.0);
         } else {
             tape.play(0);
         }
-        */
     }
 
+    // records when 1, stops recording and stores duration when 0
     fun void record(int r) {
         if (r) {
             tape.clear();
@@ -145,18 +130,32 @@ public class Slicer extends Chubgraph {
         tape.record(r);
     }
 
+    // set loop duration
+    fun dur loopDuration(dur l) {
+        l => m_loopDuration;
+    }
+
+    // get loop duration
+    fun dur loopDuration() {
+        return m_loopDuration;
+    }
+
+    // sets slice id
+    fun void id(int i) {
+        i => m_id;
+    }
+
+    // set buffer duration
     fun void duration(dur d) {
         tape.duration(d);
     }
 
-    fun void loopDuration(dur ld) {
-        ld => m_loopDuration;
-    }
-
+    // set slice width
     fun void sliceWidth(float sw) {
         sw => m_sliceWidth;
     }
 
+    // set envelope percentage
     fun void envelopePercentage(float ep) {
         ep => m_envelopePercentage;
     }

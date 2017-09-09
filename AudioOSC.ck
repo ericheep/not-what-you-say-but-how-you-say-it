@@ -19,16 +19,17 @@ public class AudioOSC {
         out.send();
     }
 
-     fun void sendGain(Gain gn, dur loopDuration, int id) {
-        0.0 => float position;
+    fun void sendGain(Gain gn, int id, float verticalPosition, dur sendDuration) {
         now => time loopStart;
+        0.0 => float horizontalPosition;
 
-        while (position <= 1.0) {
-            (now - loopStart)/loopDuration => position;
+        while (horizontalPosition <= 1.0) {
             gn.last() => float val;
+            (now - loopStart)/sendDuration => horizontalPosition;
 
             out.start("/g");
-            out.add(position);
+            out.add(horizontalPosition);
+            out.add(verticalPosition);
             out.add(val);
             out.add(id);
             out.send();

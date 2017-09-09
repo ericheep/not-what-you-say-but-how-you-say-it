@@ -8,7 +8,7 @@
 // init
 AudioOSCID audioOSC;
 
-32 => int TOTAL_TAKES;
+16 => int TOTAL_TAKES;
 TOTAL_TAKES=> int NUM_SLICES;
 
 // global, ugh
@@ -54,17 +54,26 @@ fun void sliceLoop(int whichTake) {
 }
 */
 
-fun void sectionOne(int whichTake) {
-    // spork ~ record(whichTake);
+fun void recordAndPlayLoops(int whichTake) {
+    <<< "~", "" >>>;
 
     for (0 => int i; i < whichTake; i++) {
+        (i + 1)$float/(whichTake + 1) => float verticalPosition;
 
         // always record the newest take loop
         if (i == whichTake - 1) {
-            spork ~ slcr[whichTake - i].loop(1);
+            spork ~ slcr[whichTake - i].loop(1, verticalPosition);
+            <<< "recording", i, "" >>>;
         } else {
-            spork ~ slcr[whichTake - i].loop(0);
+            spork ~ slcr[whichTake - i].loop(0, verticalPosition);
+            <<< "playing", i, "" >>>;
         }
+    }
+}
+
+fun void setLoopDurations(dur loopDuration) {
+    for (0 => int i; i < TOTAL_TAKES; i++) {
+        slcr[i].loopDuration(loopDuration);
     }
 }
 
@@ -79,14 +88,15 @@ fun void main() {
             // ~
             if (msg.ascii == 96) {
                 if (msg.isButtonDown()) {
+                    <<< "recording", 0, "" >>>;
                     slcr[0].record(1);
                     1 => recordFlag;
                 }
                 if (msg.isButtonUp()) {
                     slcr[0].record(0);
+                    setLoopDurations(slcr[0].loopDuration());
                     0 => recordFlag;
-
-                    1 => whichTake;
+                    2 => whichTake;
                 }
             }
 
@@ -94,8 +104,7 @@ fun void main() {
             if (msg.ascii == 32) {
                 if (msg.isButtonDown()) {
                     audioOSC.instance.clear();
-                    sectionOne(whichTake);
-                    // sliceLoop(whichTake);
+                    recordAndPlayLoops(whichTake);
 
                     whichTake++;
                     if (whichTake >= TOTAL_TAKES) {
