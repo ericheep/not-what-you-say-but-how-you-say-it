@@ -5,7 +5,7 @@ public class AudioOSC {
 
     out.dest("127.0.0.1", 12345);
 
-    22.05::samp => dur OSC_SPEED;
+    .1::ms => dur OSC_SPEED;
 
     fun void clear() {
         out.start("/c");
@@ -19,19 +19,18 @@ public class AudioOSC {
         out.send();
     }
 
-    fun void sendGain(Gain gn, int id, float verticalPosition, dur sendDuration) {
+    fun void sendGain(Gain gn, int idx, int num, dur sendDuration) {
         now => time loopStart;
         0.0 => float horizontalPosition;
 
         while (horizontalPosition <= 1.0) {
-            gn.last() => float val;
             (now - loopStart)/sendDuration => horizontalPosition;
 
             out.start("/g");
             out.add(horizontalPosition);
-            out.add(verticalPosition);
-            out.add(val);
-            out.add(id);
+            out.add(gn.last());
+            out.add(idx);
+            out.add(num);
             out.send();
 
             OSC_SPEED => now;

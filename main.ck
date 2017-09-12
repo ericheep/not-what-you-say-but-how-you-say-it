@@ -58,15 +58,13 @@ fun void recordAndPlayLoops(int whichTake) {
     <<< "~", "" >>>;
 
     for (0 => int i; i < whichTake; i++) {
-        (i + 1)$float/(whichTake + 1) => float verticalPosition;
-
         // always record the newest take loop
         if (i == whichTake - 1) {
-            spork ~ slcr[whichTake - i].loop(1, verticalPosition);
-            <<< "recording", i, "" >>>;
+            spork ~ slcr[i].loop(1, whichTake);
+            // <<< "recording", i, "" >>>;
         } else {
-            spork ~ slcr[whichTake - i].loop(0, verticalPosition);
-            <<< "playing", i, "" >>>;
+            spork ~ slcr[i].loop(0, whichTake);
+            // <<< "playing", i, "" >>>;
         }
     }
 }
@@ -88,7 +86,6 @@ fun void main() {
             // ~
             if (msg.ascii == 96) {
                 if (msg.isButtonDown()) {
-                    <<< "recording", 0, "" >>>;
                     slcr[0].record(1);
                     1 => recordFlag;
                 }

@@ -91,13 +91,14 @@ public class Slicer extends Chubgraph {
     */
 
     // straight forward looper
-    fun void loop(int record, float verticalPosition) {
-        spork ~ audioOSC.instance.sendGain(tapeGn, m_id, verticalPosition, m_loopDuration);
-
+    fun void loop(int record, int num) {
+        <<< "m_id", m_id, "num", num, "record", record >>>;
         if (record) {
+            spork ~ audioOSC.instance.sendGain(micGn, m_id, num, m_loopDuration);
             tape.record(1);
             micGn.gain(1.0);
         } else {
+            spork ~ audioOSC.instance.sendGain(tapeGn, m_id, num, m_loopDuration);
             tape.playPos(0.0::samp);
             tape.play(1);
         }
