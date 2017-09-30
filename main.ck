@@ -40,31 +40,13 @@ for (0 => int i; i < NUM_SLICES; i++) {
 
 // guts
 
-/*
-fun void sliceLoop(int whichTake) {
-    spork ~ record(whichTake);
-
-    for (0 => int i; i < whichTake + 1; i++) {
-        if (i == 0) {
-            spork ~ slcr[whichTake - i].slice(i, whichTake + 1, 0);
-        } else {
-            spork ~ slcr[whichTake - i].slice(i, whichTake + 1, 1);
-        }
-    }
-}
-*/
-
 fun void recordAndPlayLoops(int whichTake) {
-    <<< "~", "" >>>;
-
     for (0 => int i; i < whichTake; i++) {
         // always record the newest take loop
         if (i == whichTake - 1) {
             spork ~ slcr[i].loop(1, whichTake);
-            // <<< "recording", i, "" >>>;
         } else {
             spork ~ slcr[i].loop(0, whichTake);
-            // <<< "playing", i, "" >>>;
         }
     }
 }
@@ -82,7 +64,6 @@ fun void main() {
         hi => now;
 
         while (hi.recv(msg)) {
-
             // ~
             if (msg.ascii == 96) {
                 if (msg.isButtonDown()) {
@@ -96,6 +77,14 @@ fun void main() {
                     2 => whichTake;
                 }
             }
+
+            // p
+            if (msg.ascii == 80) {
+                if (msg.isButtonDown()) {
+                    slcr[0].loop(0, 1);
+                }
+            }
+
 
             // spacebar
             if (msg.ascii == 32) {
