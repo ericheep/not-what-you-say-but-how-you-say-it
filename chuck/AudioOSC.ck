@@ -12,6 +12,15 @@ public class AudioOSC {
         out.send();
     }
 
+    fun void sendTone(float freq, float gain, int idx, int which) {
+        out.start("/t");
+        out.add(freq);
+        out.add(gain);
+        out.add(idx);
+        out.add(which);
+        out.send();
+    }
+
     fun void number(int idx, float pos) {
         out.start("/n");
         out.add(idx);

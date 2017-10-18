@@ -5,28 +5,33 @@
 // August 22nd, 2017
 // Eric Heep
 
-// init
+// sound chain
 AudioOSCID audioOSC;
+adc.left => Tones tonesLeft => dac.left;
+adc.right => Tones tonesRight => dac.right;
 
-16 => int TOTAL_TAKES;
-TOTAL_TAKES=> int NUM_SLICES;
-
-// global, ugh
-0 => int recordFlag;
-
-5.0::second => dur MAX_DURATION;
-0.0::second => dur loopDuration;
-
-Slicer slcr[NUM_SLICES];
+adc.left => Jammer jammerLeft => dac.chan(2);
+adc.right => Jammer jammerRight => dac.chan(3);
 
 // keyboard control
-
 Hid hi;
 HidMsg msg;
+
+// key ascii codes
+49 => int one;
+48 => int zero;
+81 => int q;
+65 => int a;
+39 => int apostrophe;
+67 => int slash;
+32 => int spacebar;
+
 if (!hi.openKeyboard(0)) me.exit();
 
-// sound chain
+tonesLeft.NUM_TONES => int NUM_TONES;
 
+// sound chain
+/*
 for (0 => int i; i < NUM_SLICES; i++) {
     adc => slcr[i] => dac;
 
@@ -37,9 +42,11 @@ for (0 => int i; i < NUM_SLICES; i++) {
     slcr[i].envelopePercentage(0.1);
     slcr[i].sliceWidth(1.0);
 }
+*/
 
 // guts
 
+/*
 fun void recordAndPlayLoops(int whichTake) {
     for (0 => int i; i < whichTake; i++) {
         // always record the newest take loop
@@ -56,47 +63,41 @@ fun void setLoopDurations(dur loopDuration) {
         slcr[i].loopDuration(loopDuration);
     }
 }
+*/
 
 fun void main() {
-    1 => int whichTake;
-
     while (true) {
         hi => now;
 
         while (hi.recv(msg)) {
-            // ~
-            if (msg.ascii == 96) {
+            <<< msg.ascii >>>;
+            if (msg.ascii == one) {
                 if (msg.isButtonDown()) {
-                    slcr[0].record(1);
-                    1 => recordFlag;
+                    tonesLeft.tuneTone(true);
                 }
                 if (msg.isButtonUp()) {
-                    slcr[0].record(0);
-                    setLoopDurations(slcr[0].loopDuration());
-                    0 => recordFlag;
-                    2 => whichTake;
+                    tonesLeft.tuneTone(false);
                 }
             }
-
-            // p
-            if (msg.ascii == 80) {
+            if (msg.ascii == zero) {
                 if (msg.isButtonDown()) {
-                    slcr[0].loop(0, 1);
+                    tonesRight.tuneTone(true);
+                }
+                if (msg.isButtonUp()) {
+                    tonesRight.tuneTone(false);
                 }
             }
-
-
-            // spacebar
-            if (msg.ascii == 32) {
-                if (msg.isButtonDown()) {
-                    audioOSC.instance.clear();
-                    recordAndPlayLoops(whichTake);
-
-                    whichTake++;
-                    if (whichTake >= TOTAL_TAKES) {
-                        1 => whichTake;
-                    }
-                }
+            if (msg.ascii == q && msg.isButtonDown()) {
+                jammerRight.increaseDelay();
+            }
+            if (msg.ascii == a && msg.isButtonDown()) {
+                jammerRight.decreaseDelay();
+            }
+            if (msg.ascii == apostrophe && msg.isButtonDown()) {
+                jammerLeft.increaseDelay();
+            }
+            if (msg.ascii == slash && msg.isButtonDown()) {
+                jammerLeft.decreaseDelay();
             }
         }
     }

@@ -48,15 +48,17 @@ public class Tones extends Chubgraph {
         }
     }
 
+    /*
     fun void display() {
         while (true) {
             <<< "Desired:", desiredFreqs[0], desiredFreqs[1], desiredFreqs[2],
-               "Current:", currentFreqs[0], currentFreqs[1], currentFreqs[2] >>>;
+                "Current:", currentFreqs[0], currentFreqs[1], currentFreqs[2] >>>;
             100::ms => now;
         }
     }
 
     spork ~ display();
+    */
 
     fun void tuneTone(int t) {
         if (t) {
