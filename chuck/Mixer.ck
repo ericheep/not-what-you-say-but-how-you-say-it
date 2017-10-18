@@ -6,7 +6,7 @@
 public class Mixer extends Chubgraph {
     inlet => LiSa mic => outlet;
 
-    3       => int divisions;
+    16      => int divisions;
     0.0     => float difficulty;
     0::samp => dur loopTime;
     false   => int isRecording;
@@ -48,6 +48,16 @@ public class Mixer extends Chubgraph {
         }
         mic.recPos() => loopTime;
         mic.record(0);
+        generatePositions();
+    }
+
+    fun void randomSwap() {
+        order.size() => int SIZE;
+        Math.random2(0, SIZE - 1) => int j;
+        Math.random2(0, SIZE - 1) => int i;
+        order[j] => int tmp;
+        order[i] => order[j];
+        tmp => order[i];
     }
 
     fun void shuffleArray(int arr[]) {
@@ -62,7 +72,7 @@ public class Mixer extends Chubgraph {
         }
     }
 
-    fun void shuffle() {
+    fun void generatePositions() {
         for (int i; i < divisions - 1; i++) {
             1.0/divisions + 1.0/divisions * i => positions[i + 1];
             (Math.random2f(0.0, difficulty) * 1.0/divisions) * 0.5 => float augment;
@@ -75,8 +85,6 @@ public class Mixer extends Chubgraph {
         }
 
         1.0 - positions[divisions - 1] => lengths[divisions - 1];
-
-        shuffleArray(order);
     }
 
     fun void play() {
@@ -86,12 +94,10 @@ public class Mixer extends Chubgraph {
             mic.playPos(positions[idx] * loopTime);
 
             (lengths[idx] * loopTime) => dur partialTime;
-            mic.rampUp(partialTime * 0.1);
-            partialTime * 0.9 => now;
-            mic.rampDown(partialTime * 0.1);
-            partialTime * 0.1 => now;
-
-            <<< idx, positions[idx], lengths[idx] >>>;
+            mic.rampUp(partialTime * 0.05);
+            partialTime * 0.95 => now;
+            mic.rampDown(partialTime * 0.05);
+            partialTime * 0.05 => now;
         }
         mic.play(0);
     }
@@ -117,7 +123,6 @@ fun void test() {
         hi => now;
 
         while (hi.recv(msg)) {
-            <<< msg.ascii >>>;
             if (msg.ascii == one) {
                 if (msg.isButtonDown()) {
                     m.record(true);
@@ -128,7 +133,7 @@ fun void test() {
             }
 
             if (msg.ascii == two && msg.isButtonDown()) {
-                m.shuffle();
+                m.randomSwap();
             }
 
             if (msg.ascii == q && msg.isButtonDown()) {
@@ -145,7 +150,7 @@ fun void test() {
             }
 
             if (msg.ascii == nine && msg.isButtonDown()) {
-                m.shuffle();
+                m.randomSwap();
             }
             if (msg.ascii == o && msg.isButtonDown()) {
                 m.play();
