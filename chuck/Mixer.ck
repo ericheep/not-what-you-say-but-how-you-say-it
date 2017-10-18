@@ -7,19 +7,17 @@ public class Mixer extends Chubgraph {
     inlet => LiSa mic => outlet;
 
     16      => int divisions;
-    0.0     => float difficulty;
+    0.5     => float difficulty;
     0::samp => dur loopTime;
     false   => int isRecording;
+    0.01    => float envelopePercentage;
 
     // shuffles
     float positions[divisions];
     float lengths[divisions];
     int order[divisions];
 
-    for (int i; i < divisions; i++) {
-        i => order[i];
-    }
-
+    resetOrder();
     mic.duration(5::second);
 
     fun void setDivisions(int d) {
@@ -39,7 +37,14 @@ public class Mixer extends Chubgraph {
         }
     }
 
+    fun void resetOrder() {
+        for (int i; i < divisions; i++) {
+            i => order[i];
+        }
+    }
+
     fun void recording() {
+        resetOrder();
         mic.clear();
         mic.recPos(0::samp);
         mic.record(1);
@@ -94,10 +99,10 @@ public class Mixer extends Chubgraph {
             mic.playPos(positions[idx] * loopTime);
 
             (lengths[idx] * loopTime) => dur partialTime;
-            mic.rampUp(partialTime * 0.05);
-            partialTime * 0.95 => now;
-            mic.rampDown(partialTime * 0.05);
-            partialTime * 0.05 => now;
+            mic.rampUp(partialTime * envelopePercentage);
+            partialTime * (1.0 - envelopePercentage) => now;
+            mic.rampDown(partialTime * envelopePercentage);
+            partialTime * envelopePercentage => now;
         }
         mic.play(0);
     }
